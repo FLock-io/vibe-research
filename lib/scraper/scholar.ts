@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { Paper } from "@/types";
 import crypto from "crypto";
+import { extractKeywordsFromTitle } from "./extractKeywords";
 
 const SCHOLAR_BASE_URL = "https://scholar.google.com";
 const FLOCK_SCHOLAR_ID = "s0eOtD8AAAAJ";
@@ -232,7 +233,7 @@ export function transformScrapedPapers(scraped: ScrapedPaper[]): Paper[] {
     citationCount: paper.citationCount,
     url: paper.url,
     abstract: paper.abstract,
-    tags: [], // Will be populated by LLM later
+    tags: extractKeywordsFromTitle(paper.title), // Extract keywords from title
     isFlockPaper: true,
   }));
 }
