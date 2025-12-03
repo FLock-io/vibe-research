@@ -45,13 +45,17 @@ export async function createChatCompletion(
     throw new Error("FLOCK_API_KEY is not configured");
   }
 
+  // Use FLock's available models, default to gpt-4o
+  const model = process.env.FLOCK_MODEL || "gpt-4o";
+  const requestWithModel = { ...request, model };
+
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify(request),
+    body: JSON.stringify(requestWithModel),
   });
 
   if (!response.ok) {

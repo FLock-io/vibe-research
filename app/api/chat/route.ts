@@ -86,7 +86,7 @@ Use the above papers as context when answering questions. Be concise, accurate, 
 
     // Call FLock LLM API
     const completion = await createChatCompletion({
-      model: process.env.FLOCK_MODEL || "gpt-3.5-turbo",
+      model: process.env.FLOCK_MODEL || "gpt-4o", // Use FLock's available model
       messages: [
         { role: "system", content: systemPrompt },
         ...messages.slice(-5), // Include last 5 messages for context
