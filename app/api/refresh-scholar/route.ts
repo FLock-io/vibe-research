@@ -116,7 +116,7 @@ function getTopVenues(papers: Paper[], limit: number): string[] {
 
 /**
  * Build citation graph from papers
- * Creates co-authorship connections when citation data is unavailable
+ * Creates co-authorship and temporal connections when citation data is unavailable
  */
 function buildCitationGraph(papers: Paper[], citingPapers: any[]): CitationGraph {
   const nodes = papers.map((paper) => ({
@@ -171,14 +171,43 @@ function buildCitationGraph(papers: Paper[], citingPapers: any[]): CitationGraph
     }
   }
   
-  console.log(`Created ${coauthorEdges.length} co-authorship edges`);
+  // Build temporal edges (papers from consecutive years or same venue)
+  const temporalEdges: Array<{ sourceId: string; targetId: string; relationType: "authored_by" }> = [];
+  for (let i = 0; i < papers.length; i++) {
+    for (let j = i + 1; j < papers.length; j++) {
+      const paper1 = papers[i];
+      const paper2 = papers[j];
+      
+      // Connect if same venue or years are close (within 1 year)
+      if (paper1.venue === paper2.venue && Math.abs(paper1.year - paper2.year) <= 1) {
+        temporalEdges.push({
+          sourceId: paper1.id,
+          targetId: paper2.id,
+          relationType: "authored_by",
+        });
+      }
+    }
+  }
   
-  // If we have citing papers, use those edges; otherwise use co-authorship
-  const edges = citationEdges.length > 0 ? citationEdges : coauthorEdges;
+  console.log(`Graph stats: ${coauthorEdges.length} co-author edges, ${temporalEdges.length} temporal edges`);
+  
+  // Combine all edge types
+  let allEdges = [...citationEdges, ...coauthorEdges, ...temporalEdges];
+  
+  // Remove duplicates
+  const seen = new Set();
+  allEdges = allEdges.filter((edge) => {
+    const key = `${edge.sourceId}-${edge.targetId}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  
+  console.log(`Final graph: ${nodes.length + externalNodes.length} nodes, ${allEdges.length} edges`);
   
   return {
     nodes: [...nodes, ...externalNodes],
-    edges,
+    edges: allEdges,
   };
 }
 
