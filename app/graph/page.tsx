@@ -267,17 +267,26 @@ export default function GraphPage() {
                   }
                 }}
                 linkColor={(link: any) => {
-                  const linkId = `${link.source.id || link.source}-${link.target.id || link.target}`;
+                  if (!link || !link.source || !link.target) return "#e5e7eb";
+                  const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+                  const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+                  const linkId = `${sourceId}-${targetId}`;
                   return highlightLinks.has(linkId) ? "#6366f1" : "#e5e7eb";
                 }}
                 linkWidth={(link: any) => {
-                  const linkId = `${link.source.id || link.source}-${link.target.id || link.target}`;
+                  if (!link || !link.source || !link.target) return 1;
+                  const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+                  const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+                  const linkId = `${sourceId}-${targetId}`;
                   return highlightLinks.has(linkId) ? 3 : 1;
                 }}
                 linkDirectionalArrowLength={6}
                 linkDirectionalArrowRelPos={0.8}
                 linkDirectionalParticles={(link: any) => {
-                  const linkId = `${link.source.id || link.source}-${link.target.id || link.target}`;
+                  if (!link || !link.source || !link.target) return 0;
+                  const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+                  const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+                  const linkId = `${sourceId}-${targetId}`;
                   return highlightLinks.has(linkId) ? 4 : 0;
                 }}
                 linkDirectionalParticleWidth={3}
