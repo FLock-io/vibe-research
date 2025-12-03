@@ -357,8 +357,9 @@ export default function GraphPage() {
                 {graphData.graph.edges.length}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Citation Edges</div>
-              </div>
-            )}
+            </div>
+          </div>
+        )}
             
             {/* Selected Node Details */}
             {selectedNode && (
