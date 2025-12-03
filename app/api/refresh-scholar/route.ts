@@ -114,6 +114,7 @@ function getTopVenues(papers: Paper[], limit: number): string[] {
 
 /**
  * Build citation graph from papers
+ * Creates co-authorship connections when citation data is unavailable
  */
 function buildCitationGraph(papers: Paper[], citingPapers: any[]): CitationGraph {
   const nodes = papers.map((paper) => ({
@@ -139,12 +140,37 @@ function buildCitationGraph(papers: Paper[], citingPapers: any[]): CitationGraph
     authors: citing.authors,
   }));
   
-  // Build edges
-  const edges = citingPapers.map((citing) => ({
+  // Build citation edges
+  const citationEdges = citingPapers.map((citing) => ({
     sourceId: `external-${citing.title.substring(0, 20).replace(/\s/g, "-")}`,
     targetId: citing.citedPaperId,
     relationType: "cites" as const,
   }));
+  
+  // Build co-authorship edges (papers that share authors)
+  const coauthorEdges: Array<{ sourceId: string; targetId: string; relationType: "authored_by" }> = [];
+  for (let i = 0; i < papers.length; i++) {
+    for (let j = i + 1; j < papers.length; j++) {
+      const paper1 = papers[i];
+      const paper2 = papers[j];
+      
+      // Check if they share any authors
+      const sharedAuthors = paper1.authors.filter((author) =>
+        paper2.authors.some((a) => a.toLowerCase() === author.toLowerCase())
+      );
+      
+      if (sharedAuthors.length > 0) {
+        coauthorEdges.push({
+          sourceId: paper1.id,
+          targetId: paper2.id,
+          relationType: "authored_by",
+        });
+      }
+    }
+  }
+  
+  // If we have citing papers, use those edges; otherwise use co-authorship
+  const edges = citationEdges.length > 0 ? citationEdges : coauthorEdges;
   
   return {
     nodes: [...nodes, ...externalNodes],

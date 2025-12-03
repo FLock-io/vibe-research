@@ -133,20 +133,78 @@ export default function GraphPage() {
               <div className="text-gray-600 dark:text-gray-400">Loading graph...</div>
             </div>
           ) : graphDataForViz && graphDataForViz.nodes.length > 0 ? (
-            <div style={{ width: "100%", height: "600px" }}>
+            <div style={{ width: "100%", height: "600px", position: "relative" }}>
               <ForceGraph2D
                 graphData={graphDataForViz}
-                nodeLabel="title"
-                nodeColor={(node: any) => (node.isFlockPaper ? "#6366f1" : "#ec4899")}
-                nodeRelSize={6}
-                nodeVal={(node: any) => Math.sqrt(node.citationCount + 1) * 2}
-                linkColor={() => "#94a3b8"}
-                linkWidth={1}
-                linkDirectionalArrowLength={3}
-                linkDirectionalArrowRelPos={1}
+                nodeLabel={(node: any) => `${node.title}\n${node.venue || ""} ${node.year || ""}\n${node.citationCount} citations`}
+                nodeColor={(node: any) => {
+                  if (!node.isFlockPaper) return "#ec4899"; // Pink for external
+                  // Color by venue for FLock papers
+                  const venueColors: Record<string, string> = {
+                    "NeurIPS": "#6366f1",
+                    "ICML": "#8b5cf6", 
+                    "ICLR": "#a855f7",
+                    "CVPR": "#c084fc",
+                    "arXiv": "#10b981",
+                    "IEEE": "#f59e0b",
+                    "ACM": "#ef4444",
+                  };
+                  return venueColors[node.venue as string] || "#6366f1";
+                }}
+                nodeRelSize={8}
+                nodeVal={(node: any) => {
+                  // Size based on citation count (more citations = bigger node)
+                  const baseSize = 3;
+                  const citationSize = Math.sqrt(node.citationCount + 1) * 2;
+                  return baseSize + citationSize;
+                }}
+                nodeCanvasObject={(node: any, ctx, globalScale) => {
+                  // Draw custom node with label
+                  const label = node.title;
+                  const fontSize = 12 / globalScale;
+                  const size = (3 + Math.sqrt(node.citationCount + 1) * 2) * 2;
+                  
+                  // Draw circle
+                  ctx.beginPath();
+                  ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
+                  ctx.fillStyle = node.isFlockPaper 
+                    ? (node.venue === "arXiv" ? "#10b981" : 
+                       node.venue === "IEEE" ? "#f59e0b" :
+                       node.venue === "ICML" ? "#8b5cf6" :
+                       "#6366f1")
+                    : "#ec4899";
+                  ctx.fill();
+                  
+                  // Add border
+                  ctx.strokeStyle = "#ffffff";
+                  ctx.lineWidth = 2 / globalScale;
+                  ctx.stroke();
+                  
+                  // Draw label if zoomed in enough
+                  if (globalScale > 1.5 && label) {
+                    ctx.font = `${fontSize}px Sans-Serif`;
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillStyle = "#000000";
+                    const maxWidth = 100;
+                    const truncated = label.length > 30 ? label.substring(0, 30) + "..." : label;
+                    ctx.fillText(truncated, node.x, node.y + size + 15);
+                  }
+                }}
+                linkColor={() => "#cbd5e1"}
+                linkWidth={2}
+                linkDirectionalArrowLength={6}
+                linkDirectionalArrowRelPos={0.8}
+                linkDirectionalParticles={2}
+                linkDirectionalParticleWidth={2}
                 onNodeClick={handleNodeClick}
+                onNodeHover={(node) => {
+                  document.body.style.cursor = node ? "pointer" : "default";
+                }}
                 width={1200}
                 height={600}
+                cooldownTicks={100}
+                d3VelocityDecay={0.3}
               />
             </div>
           ) : (
@@ -156,6 +214,40 @@ export default function GraphPage() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Legend */}
+        <div className="max-w-4xl mx-auto mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-200 dark:border-gray-700">
+          <h3 className="text-sm font-semibold mb-3">Venue Color Legend:</h3>
+          <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-indigo-600"></div>
+              <span className="text-sm">NeurIPS / ICLR</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-purple-600"></div>
+              <span className="text-sm">ICML</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-green-600"></div>
+              <span className="text-sm">arXiv</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-orange-500"></div>
+              <span className="text-sm">IEEE</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-red-500"></div>
+              <span className="text-sm">ACM</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-pink-500"></div>
+              <span className="text-sm">Citing Papers</span>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Node size reflects citation count. Zoom and pan to explore. Click nodes for details.
+          </p>
         </div>
 
         {/* Graph Stats */}
@@ -177,8 +269,19 @@ export default function GraphPage() {
               <div className="text-3xl font-bold text-pink-600 dark:text-pink-400 mb-2">
                 {graphData.graph.edges.length}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Citations</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Citation Edges</div>
             </div>
+          </div>
+        )}
+        
+        {/* Info about citations */}
+        {graphData && graphData.graph.edges.length === 0 && (
+          <div className="max-w-4xl mx-auto mb-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              <strong>Note:</strong> Citation edges between papers will appear here once we scrape citing papers from Google Scholar. 
+              The current view shows all {graphData.graph.nodes.filter((n) => n.isFlockPaper).length} FLock papers as independent nodes, 
+              sized by their citation count (total: {graphData.graph.nodes.reduce((sum, n) => sum + n.citationCount, 0)} citations).
+            </p>
           </div>
         )}
 
