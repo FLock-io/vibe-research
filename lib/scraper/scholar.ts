@@ -222,19 +222,24 @@ export async function scrapeScholarProfile(
  * Transform scraped papers into the Paper type used by the app
  */
 export function transformScrapedPapers(scraped: ScrapedPaper[]): Paper[] {
-  return scraped.map((paper) => ({
-    id: generatePaperId(paper.scholarId, paper.title),
-    scholarId: paper.scholarId,
-    title: paper.title,
-    authors: paper.authors,
-    year: paper.year,
-    venue: paper.venue,
-    venueDisplay: paper.venueDisplay,
-    citationCount: paper.citationCount,
-    url: paper.url,
-    abstract: paper.abstract,
-    tags: extractKeywordsFromTitle(paper.title), // Extract keywords from title
-    isFlockPaper: true,
-  }));
+  return scraped.map((paper) => {
+    const tags = extractKeywordsFromTitle(paper.title);
+    console.log(`Extracted ${tags.length} keywords for: ${paper.title.substring(0, 50)}...`);
+    
+    return {
+      id: generatePaperId(paper.scholarId, paper.title),
+      scholarId: paper.scholarId,
+      title: paper.title,
+      authors: paper.authors,
+      year: paper.year,
+      venue: paper.venue,
+      venueDisplay: paper.venueDisplay,
+      citationCount: paper.citationCount,
+      url: paper.url,
+      abstract: paper.abstract,
+      tags, // Extract keywords from title
+      isFlockPaper: true,
+    };
+  });
 }
 
