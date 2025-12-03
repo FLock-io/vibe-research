@@ -22,10 +22,13 @@ export default function GraphPage() {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [selectedNode, setSelectedNode] = useState<CitationGraphNode | null>(null);
+  const [highlightNodes, setHighlightNodes] = useState(new Set());
+  const [highlightLinks, setHighlightLinks] = useState(new Set());
+  const [hoverNode, setHoverNode] = useState<any>(null);
   const [filters, setFilters] = useState({
     showExternal: true,
     minYear: 2020,
-    maxYear: 2024,
+    maxYear: 2025,
   });
 
   useEffect(() => {
@@ -67,6 +70,33 @@ export default function GraphPage() {
 
   const handleNodeClick = useCallback((node: any) => {
     setSelectedNode(node);
+    
+    // Highlight connected nodes
+    if (graphData && node) {
+      const neighbors = new Set();
+      const links = new Set();
+      
+      graphData.graph.edges.forEach((edge) => {
+        if (edge.sourceId === node.id) {
+          neighbors.add(edge.targetId);
+          links.add(`${edge.sourceId}-${edge.targetId}`);
+        }
+        if (edge.targetId === node.id) {
+          neighbors.add(edge.sourceId);
+          links.add(`${edge.sourceId}-${edge.targetId}`);
+        }
+      });
+      
+      neighbors.add(node.id);
+      setHighlightNodes(neighbors);
+      setHighlightLinks(links);
+    }
+  }, [graphData]);
+
+  const handleBackgroundClick = useCallback(() => {
+    setSelectedNode(null);
+    setHighlightNodes(new Set());
+    setHighlightLinks(new Set());
   }, []);
 
   if (loading) {
@@ -78,6 +108,9 @@ export default function GraphPage() {
   }
 
   const graphDataForViz = filteredGraphData();
+
+  // Get list of all papers for sidebar
+  const allPapers = graphData?.graph.nodes.filter((n) => n.isFlockPaper).sort((a, b) => b.citationCount - a.citationCount) || [];
 
   return (
     <div className="min-h-screen py-12">
@@ -94,50 +127,92 @@ export default function GraphPage() {
           </p>
         </div>
 
-        {/* Filters */}
-        <div className="max-w-4xl mx-auto mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex flex-wrap gap-4 items-center">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={filters.showExternal}
-                onChange={(e) => setFilters({ ...filters, showExternal: e.target.checked })}
-                className="w-4 h-4 text-indigo-600 rounded"
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Show citing papers</span>
-            </label>
-            
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-700 dark:text-gray-300">Year range:</label>
-              <input
-                type="number"
-                value={filters.minYear}
-                onChange={(e) => setFilters({ ...filters, minYear: parseInt(e.target.value) })}
-                className="w-20 px-2 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-sm"
-              />
-              <span className="text-gray-500">-</span>
-              <input
-                type="number"
-                value={filters.maxYear}
-                onChange={(e) => setFilters({ ...filters, maxYear: parseInt(e.target.value) })}
-                className="w-20 px-2 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-sm"
-              />
+        <div className="grid lg:grid-cols-4 gap-6">
+          {/* Papers Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-20 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-200 dark:border-gray-700 max-h-[700px] overflow-y-auto">
+              <h3 className="font-bold mb-3">All Papers ({allPapers.length})</h3>
+              <div className="space-y-2">
+                {allPapers.map((paper) => (
+                  <button
+                    key={paper.id}
+                    onClick={() => {
+                      handleNodeClick(paper);
+                      // Scroll graph into view on mobile
+                      document.getElementById('graph-container')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className={`w-full text-left p-3 rounded-lg transition-all text-sm ${
+                      selectedNode?.id === paper.id
+                        ? "bg-indigo-600 text-white"
+                        : "bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600"
+                    }`}
+                  >
+                    <div className="font-semibold line-clamp-2 mb-1">{paper.title}</div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className={selectedNode?.id === paper.id ? "text-indigo-200" : "text-gray-500 dark:text-gray-400"}>
+                        {paper.venue} {paper.year}
+                      </span>
+                      <span className="font-semibold">{paper.citationCount} cites</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Graph Visualization */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-8">
-          {!mounted ? (
-            <div className="h-[600px] flex items-center justify-center">
-              <div className="text-gray-600 dark:text-gray-400">Loading graph...</div>
+          {/* Main Graph Area */}
+          <div className="lg:col-span-3">
+            {/* Filters */}
+            <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-200 dark:border-gray-700">
+              <div className="flex flex-wrap gap-4 items-center">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={filters.showExternal}
+                    onChange={(e) => setFilters({ ...filters, showExternal: e.target.checked })}
+                    className="w-4 h-4 text-indigo-600 rounded"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Show citing papers</span>
+                </label>
+                
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-700 dark:text-gray-300">Year range:</label>
+                  <input
+                    type="number"
+                    value={filters.minYear}
+                    onChange={(e) => setFilters({ ...filters, minYear: parseInt(e.target.value) })}
+                    className="w-20 px-2 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-sm"
+                  />
+                  <span className="text-gray-500">-</span>
+                  <input
+                    type="number"
+                    value={filters.maxYear}
+                    onChange={(e) => setFilters({ ...filters, maxYear: parseInt(e.target.value) })}
+                    className="w-20 px-2 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-sm"
+                  />
+                </div>
+              </div>
             </div>
-          ) : graphDataForViz && graphDataForViz.nodes.length > 0 ? (
-            <div style={{ width: "100%", height: "600px", position: "relative" }}>
-              <ForceGraph2D
+
+            {/* Graph Visualization */}
+            <div id="graph-container" className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
+              {!mounted ? (
+                <div className="h-[600px] flex items-center justify-center">
+                  <div className="text-gray-600 dark:text-gray-400">Loading graph...</div>
+                </div>
+              ) : graphDataForViz && graphDataForViz.nodes.length > 0 ? (
+                <div style={{ width: "100%", height: "600px", position: "relative" }}>
+                  <ForceGraph2D
                 graphData={graphDataForViz}
                 nodeLabel={(node: any) => `${node.title}\n${node.venue || ""} ${node.year || ""}\n${node.citationCount} citations`}
                 nodeColor={(node: any) => {
+                  // Highlight selected node and its neighbors
+                  if (highlightNodes.size > 0) {
+                    return highlightNodes.has(node.id) 
+                      ? (node.isFlockPaper ? "#6366f1" : "#ec4899")
+                      : "#e5e7eb";
+                  }
+                  
                   if (!node.isFlockPaper) return "#ec4899"; // Pink for external
                   // Color by venue for FLock papers
                   const venueColors: Record<string, string> = {
@@ -191,16 +266,28 @@ export default function GraphPage() {
                     ctx.fillText(truncated, node.x, node.y + size + 15);
                   }
                 }}
-                linkColor={() => "#cbd5e1"}
-                linkWidth={2}
+                linkColor={(link: any) => {
+                  const linkId = `${link.source.id || link.source}-${link.target.id || link.target}`;
+                  return highlightLinks.has(linkId) ? "#6366f1" : "#e5e7eb";
+                }}
+                linkWidth={(link: any) => {
+                  const linkId = `${link.source.id || link.source}-${link.target.id || link.target}`;
+                  return highlightLinks.has(linkId) ? 3 : 1;
+                }}
                 linkDirectionalArrowLength={6}
                 linkDirectionalArrowRelPos={0.8}
-                linkDirectionalParticles={2}
-                linkDirectionalParticleWidth={2}
+                linkDirectionalParticles={(link: any) => {
+                  const linkId = `${link.source.id || link.source}-${link.target.id || link.target}`;
+                  return highlightLinks.has(linkId) ? 4 : 0;
+                }}
+                linkDirectionalParticleWidth={3}
+                linkDirectionalParticleSpeed={0.005}
                 onNodeClick={handleNodeClick}
                 onNodeHover={(node) => {
+                  setHoverNode(node);
                   document.body.style.cursor = node ? "pointer" : "default";
                 }}
+                onBackgroundClick={handleBackgroundClick}
                 width={1200}
                 height={600}
                 cooldownTicks={100}
@@ -214,10 +301,10 @@ export default function GraphPage() {
               </div>
             </div>
           )}
-        </div>
+              </div>
 
-        {/* Legend */}
-        <div className="max-w-4xl mx-auto mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-200 dark:border-gray-700">
+                {/* Legend */}
+            <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-200 dark:border-gray-700">
           <h3 className="text-sm font-semibold mb-3">Venue Color Legend:</h3>
           <div className="flex flex-wrap gap-3">
             <div className="flex items-center gap-2">
@@ -245,14 +332,14 @@ export default function GraphPage() {
               <span className="text-sm">Citing Papers</span>
             </div>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            Node size reflects citation count. Zoom and pan to explore. Click nodes for details.
-          </p>
-        </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Node size reflects citation count. Zoom and pan to explore. Click nodes or sidebar to highlight connections.
+              </p>
+            </div>
 
-        {/* Graph Stats */}
-        {graphData && (
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
+            {/* Graph Stats */}
+            {graphData && (
+              <div className="grid md:grid-cols-3 gap-6 mb-6">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-200 dark:border-gray-700 text-center">
               <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">
                 {graphData.graph.nodes.filter((n) => n.isFlockPaper).length}
@@ -270,63 +357,73 @@ export default function GraphPage() {
                 {graphData.graph.edges.length}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Citation Edges</div>
-            </div>
-          </div>
-        )}
-        
-        {/* Info about citations */}
-        {graphData && graphData.graph.edges.length === 0 && (
-          <div className="max-w-4xl mx-auto mb-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <p className="text-sm text-blue-800 dark:text-blue-200">
-              <strong>Note:</strong> Citation edges between papers will appear here once we scrape citing papers from Google Scholar. 
-              The current view shows all {graphData.graph.nodes.filter((n) => n.isFlockPaper).length} FLock papers as independent nodes, 
-              sized by their citation count (total: {graphData.graph.nodes.reduce((sum, n) => sum + n.citationCount, 0)} citations).
-            </p>
-          </div>
-        )}
-
-        {/* Selected Node Details */}
-        {selectedNode && (
-          <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold flex-1">{selectedNode.title}</h3>
-              <button
-                onClick={() => setSelectedNode(null)}
-                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                    selectedNode.isFlockPaper
-                      ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300"
-                      : "bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300"
-                  }`}
-                >
-                  {selectedNode.isFlockPaper ? "FLock Paper" : "Citing Paper"}
-                </span>
-                {selectedNode.venue && (
-                  <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm">
-                    {selectedNode.venue} {selectedNode.year}
-                  </span>
-                )}
               </div>
-              {selectedNode.authors && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {selectedNode.authors.join(", ")}
+            )}
+            
+            {/* Selected Node Details */}
+            {selectedNode && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-bold flex-1">{selectedNode.title}</h3>
+                  <button
+                    onClick={() => {
+                      setSelectedNode(null);
+                      setHighlightNodes(new Set());
+                      setHighlightLinks(new Set());
+                    }}
+                    className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                        selectedNode.isFlockPaper
+                          ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300"
+                          : "bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300"
+                      }`}
+                    >
+                      {selectedNode.isFlockPaper ? "FLock Paper" : "Citing Paper"}
+                    </span>
+                    {selectedNode.venue && (
+                      <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm">
+                        {selectedNode.venue} {selectedNode.year}
+                      </span>
+                    )}
+                  </div>
+                  {selectedNode.authors && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedNode.authors.join(", ")}
+                    </p>
+                  )}
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {selectedNode.citationCount} citations
+                  </p>
+                  {highlightNodes.size > 1 && (
+                    <p className="text-sm text-indigo-600 dark:text-indigo-400 mt-3">
+                      Connected to {highlightNodes.size - 1} other papers
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* Info about citations */}
+            {graphData && graphData.graph.edges.length === 0 && (
+              <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  <strong>Note:</strong> Citation edges between papers will appear here once we scrape citing papers from Google Scholar. 
+                  The current view shows all {graphData.graph.nodes.filter((n) => n.isFlockPaper).length} FLock papers as independent nodes, 
+                  sized by their citation count (total: {graphData.graph.nodes.reduce((sum, n) => sum + n.citationCount, 0)} citations).
                 </p>
-              )}
-              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                {selectedNode.citationCount} citations
-              </p>
-            </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

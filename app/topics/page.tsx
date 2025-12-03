@@ -105,36 +105,76 @@ export default function TopicsPage() {
             {/* Semantic Map Visualization */}
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-8 border border-gray-200 dark:border-gray-700 shadow-lg">
               <h3 className="text-xl font-bold mb-4">Semantic Map</h3>
-              <div className="relative h-[400px] bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-indigo-950/20 dark:to-purple-950/20 rounded-lg overflow-hidden">
-                {embeddings && embeddings.embeddings.length > 0 ? (
-                  <svg width="100%" height="100%" className="absolute inset-0">
+              <div className="relative h-[500px] bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-indigo-950/20 dark:to-purple-950/20 rounded-lg overflow-hidden">
+                {papers.length > 0 ? (
+                  <svg width="100%" height="100%" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" className="absolute inset-0">
+                    {/* Draw connections between papers with shared topics */}
+                    {papers.map((paper1, i) => {
+                      return papers.slice(i + 1).map((paper2, j) => {
+                        const shared = paper1.tags.filter((t) => paper2.tags.includes(t));
+                        if (shared.length === 0) return null;
+                        
+                        const x1 = ((i * 137) % 800) + 100;
+                        const y1 = ((i * 97) % 350) + 75;
+                        const x2 = (((i + j + 1) * 137) % 800) + 100;
+                        const y2 = (((i + j + 1) * 97) % 350) + 75;
+                        
+                        return (
+                          <line
+                            key={`${paper1.id}-${paper2.id}`}
+                            x1={x1}
+                            y1={y1}
+                            x2={x2}
+                            y2={y2}
+                            stroke="#cbd5e1"
+                            strokeWidth={Math.min(shared.length, 3)}
+                            opacity={0.3}
+                          />
+                        );
+                      });
+                    })}
+                    
                     {/* Draw papers as circles */}
-                    {embeddings.embeddings.map((emb) => {
-                      const paper = papers.find((p) => p.id === emb.paperId);
-                      if (!paper) return null;
+                    {papers.map((paper, i) => {
+                      // Pseudo-random but deterministic positioning
+                      const x = ((i * 137) % 800) + 100;
+                      const y = ((i * 97) % 350) + 75;
                       
-                      // Scale coordinates to fit the SVG (assuming embeddings are normalized 0-1)
-                      const x = emb.x * 800 + 50;
-                      const y = emb.y * 350 + 25;
-                      
-                      // Color by cluster
+                      // Color by primary topic/tag
                       const clusterColors = ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"];
-                      const color = clusterColors[emb.clusterId % clusterColors.length];
+                      const colorIndex = paper.tags[0] ? paper.tags[0].length % 5 : i % 5;
+                      const color = clusterColors[colorIndex];
+                      
+                      const radius = Math.sqrt(paper.citationCount + 1) * 2 + 8;
                       
                       return (
                         <g
-                          key={emb.paperId}
+                          key={paper.id}
                           onClick={() => setSelectedPaper(paper)}
                           className="cursor-pointer hover:opacity-80 transition-opacity"
                         >
                           <circle
                             cx={x}
                             cy={y}
-                            r={Math.sqrt(paper.citationCount + 1) * 2 + 5}
+                            r={radius}
                             fill={color}
-                            opacity={0.7}
+                            opacity={0.8}
+                            stroke="white"
+                            strokeWidth="2"
                           />
-                          <title>{paper.title}</title>
+                          {paper.citationCount > 20 && (
+                            <text
+                              x={x}
+                              y={y + radius + 15}
+                              textAnchor="middle"
+                              fontSize="11"
+                              fill="currentColor"
+                              className="text-gray-700 dark:text-gray-300"
+                            >
+                              {paper.title.substring(0, 20)}...
+                            </text>
+                          )}
+                          <title>{paper.title} ({paper.citationCount} citations)</title>
                         </g>
                       );
                     })}
@@ -148,15 +188,15 @@ export default function TopicsPage() {
                         </svg>
                       </div>
                       <p className="text-gray-600 dark:text-gray-400">
-                        Semantic embeddings will be computed and visualized here
+                        Loading semantic visualization...
                       </p>
                     </div>
                   </div>
                 )}
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Clusters:</span>
-                {["Federated Learning", "Privacy & Security", "Incentive Design", "Optimization", "Applications"].map((cluster, i) => (
+                <span className="text-sm text-gray-600 dark:text-gray-400">Topic Clusters:</span>
+                {["Federated Learning", "Privacy & Security", "Blockchain", "ML Optimization", "Applications"].map((cluster, i) => (
                   <span
                     key={i}
                     className="px-3 py-1 rounded-full text-xs font-semibold"
@@ -169,6 +209,9 @@ export default function TopicsPage() {
                   </span>
                 ))}
               </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                Papers are positioned based on topic similarity. Larger circles = more citations. Click to view details.
+              </p>
             </div>
 
             {/* Papers Grid */}
