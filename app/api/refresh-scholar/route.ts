@@ -57,6 +57,8 @@ export async function GET(request: NextRequest) {
     // Build citation graph
     const citationGraph = buildCitationGraph(papers, scraperResult.citingPapers);
     
+    console.log(`Built citation graph: ${citationGraph.nodes.length} nodes, ${citationGraph.edges.length} edges`);
+    
     // Save to KV if configured, otherwise save to local files
     if (isKVConfigured()) {
       await Promise.all([
@@ -168,6 +170,8 @@ function buildCitationGraph(papers: Paper[], citingPapers: any[]): CitationGraph
       }
     }
   }
+  
+  console.log(`Created ${coauthorEdges.length} co-authorship edges`);
   
   // If we have citing papers, use those edges; otherwise use co-authorship
   const edges = citationEdges.length > 0 ? citationEdges : coauthorEdges;
