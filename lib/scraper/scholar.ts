@@ -114,8 +114,14 @@ export async function scrapeScholarProfile(
       
       console.log(`Fetching Scholar page: cstart=${pageStart}`);
       
+      // Use ScraperAPI if available, otherwise direct fetch
+      const scraperApiKey = process.env.SCRAPER_API_KEY;
+      const fetchUrl = scraperApiKey
+        ? `http://api.scraperapi.com?api_key=${scraperApiKey}&url=${encodeURIComponent(profileUrl)}`
+        : profileUrl;
+      
       // Add a user agent to avoid being blocked
-      const response = await fetch(profileUrl, {
+      const response = await fetch(fetchUrl, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         },
