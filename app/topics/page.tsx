@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Paper, PapersResponse, SemanticEmbeddingsResponse } from "@/types";
+import { WordCloud } from "@/components/word-cloud";
 
 export default function TopicsPage() {
   const [papers, setPapers] = useState<Paper[]>([]);
@@ -31,10 +32,25 @@ export default function TopicsPage() {
     fetchData();
   }, []);
 
-  // Extract all unique keywords
-  const allKeywords = Array.from(
-    new Set(papers.flatMap((p) => p.tags))
-  ).sort();
+  // Extract all unique keywords with frequency
+  const keywordFrequency = papers.reduce((acc, paper) => {
+    paper.tags.forEach((tag) => {
+      acc[tag] = (acc[tag] || 0) + 1;
+    });
+    return acc;
+  }, {} as Record<string, number>);
+
+  const allKeywords = Object.keys(keywordFrequency).sort();
+  
+  // Prepare word cloud data
+  const wordCloudData = Object.entries(keywordFrequency).map(([text, value], index) => {
+    const colors = ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#ef4444"];
+    return {
+      text,
+      value,
+      color: colors[index % colors.length],
+    };
+  }).sort((a, b) => b.value - a.value);
 
   // Filter papers by keyword
   const filteredPapers = selectedKeyword
@@ -102,115 +118,30 @@ export default function TopicsPage() {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            {/* Semantic Map Visualization */}
+            {/* Word Cloud Visualization */}
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-8 border border-gray-200 dark:border-gray-700 shadow-lg">
-              <h3 className="text-xl font-bold mb-4">Semantic Map</h3>
-              <div className="relative h-[500px] bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-indigo-950/20 dark:to-purple-950/20 rounded-lg overflow-hidden">
-                {papers.length > 0 ? (
-                  <svg width="100%" height="100%" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" className="absolute inset-0">
-                    {/* Draw connections between papers with shared topics */}
-                    {papers.map((paper1, i) => {
-                      return papers.slice(i + 1).map((paper2, j) => {
-                        const shared = paper1.tags.filter((t) => paper2.tags.includes(t));
-                        if (shared.length === 0) return null;
-                        
-                        const x1 = ((i * 137) % 800) + 100;
-                        const y1 = ((i * 97) % 350) + 75;
-                        const x2 = (((i + j + 1) * 137) % 800) + 100;
-                        const y2 = (((i + j + 1) * 97) % 350) + 75;
-                        
-                        return (
-                          <line
-                            key={`${paper1.id}-${paper2.id}`}
-                            x1={x1}
-                            y1={y1}
-                            x2={x2}
-                            y2={y2}
-                            stroke="#cbd5e1"
-                            strokeWidth={Math.min(shared.length, 3)}
-                            opacity={0.3}
-                          />
-                        );
-                      });
-                    })}
-                    
-                    {/* Draw papers as circles */}
-                    {papers.map((paper, i) => {
-                      // Pseudo-random but deterministic positioning
-                      const x = ((i * 137) % 800) + 100;
-                      const y = ((i * 97) % 350) + 75;
-                      
-                      // Color by primary topic/tag
-                      const clusterColors = ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"];
-                      const colorIndex = paper.tags[0] ? paper.tags[0].length % 5 : i % 5;
-                      const color = clusterColors[colorIndex];
-                      
-                      const radius = Math.sqrt(paper.citationCount + 1) * 2 + 8;
-                      
-                      return (
-                        <g
-                          key={paper.id}
-                          onClick={() => setSelectedPaper(paper)}
-                          className="cursor-pointer hover:opacity-80 transition-opacity"
-                        >
-                          <circle
-                            cx={x}
-                            cy={y}
-                            r={radius}
-                            fill={color}
-                            opacity={0.8}
-                            stroke="white"
-                            strokeWidth="2"
-                          />
-                          {paper.citationCount > 20 && (
-                            <text
-                              x={x}
-                              y={y + radius + 15}
-                              textAnchor="middle"
-                              fontSize="11"
-                              fill="currentColor"
-                              className="text-gray-700 dark:text-gray-300"
-                            >
-                              {paper.title.substring(0, 20)}...
-                            </text>
-                          )}
-                          <title>{paper.title} ({paper.citationCount} citations)</title>
-                        </g>
-                      );
-                    })}
-                  </svg>
+              <h3 className="text-xl font-bold mb-4">Research Keywords</h3>
+              <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-indigo-950/20 dark:to-purple-950/20 rounded-lg p-8 min-h-[400px] flex items-center justify-center">
+                {wordCloudData.length > 0 ? (
+                  <WordCloud
+                    words={wordCloudData}
+                    onWordClick={(word) => setSelectedKeyword(word)}
+                  />
                 ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center">
-                        <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                      </div>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        Loading semantic visualization...
-                      </p>
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
                     </div>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Loading keywords...
+                    </p>
                   </div>
                 )}
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Topic Clusters:</span>
-                {["Federated Learning", "Privacy & Security", "Blockchain", "ML Optimization", "Applications"].map((cluster, i) => (
-                  <span
-                    key={i}
-                    className="px-3 py-1 rounded-full text-xs font-semibold"
-                    style={{
-                      backgroundColor: ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"][i] + "20",
-                      color: ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"][i],
-                    }}
-                  >
-                    {cluster}
-                  </span>
-                ))}
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-                Papers are positioned based on topic similarity. Larger circles = more citations. Click to view details.
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center">
+                Keyword size represents frequency across papers. Click any keyword to filter papers below.
               </p>
             </div>
 
