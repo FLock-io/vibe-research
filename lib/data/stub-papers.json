@@ -1,0 +1,82 @@
+{
+  "papers": [
+    {
+      "id": "flock-fl-blockchain-2023",
+      "scholarId": "abc123",
+      "title": "FLock: Federated Learning on Blockchain for Privacy-Preserving AI",
+      "authors": ["Alice Chen", "Bob Zhang", "Carol Liu"],
+      "year": 2023,
+      "venue": "NeurIPS",
+      "venueDisplay": "Neural Information Processing Systems (NeurIPS) 2023",
+      "citationCount": 45,
+      "url": "https://arxiv.org/abs/2301.00000",
+      "abstract": "We propose FLock, a novel framework for federated learning on blockchain that ensures privacy preservation while maintaining model accuracy.",
+      "tags": ["federated learning", "blockchain", "privacy", "decentralized AI"],
+      "isFlockPaper": true
+    },
+    {
+      "id": "decentralized-training-2023",
+      "scholarId": "def456",
+      "title": "Decentralized Training of Large Language Models with FLock",
+      "authors": ["Bob Zhang", "David Wang", "Eve Martinez"],
+      "year": 2023,
+      "venue": "ICML",
+      "venueDisplay": "International Conference on Machine Learning (ICML) 2023",
+      "citationCount": 38,
+      "url": "https://arxiv.org/abs/2303.00000",
+      "abstract": "This paper presents a decentralized approach to training large language models using the FLock framework.",
+      "tags": ["large language models", "decentralized training", "federated learning"],
+      "isFlockPaper": true
+    },
+    {
+      "id": "privacy-ml-2022",
+      "scholarId": "ghi789",
+      "title": "Privacy-Preserving Machine Learning at Scale",
+      "authors": ["Carol Liu", "Alice Chen", "Frank Johnson"],
+      "year": 2022,
+      "venue": "ICLR",
+      "venueDisplay": "International Conference on Learning Representations (ICLR) 2022",
+      "citationCount": 67,
+      "url": "https://arxiv.org/abs/2201.00000",
+      "abstract": "We explore techniques for privacy-preserving machine learning that can scale to millions of participants.",
+      "tags": ["privacy", "machine learning", "differential privacy", "secure aggregation"],
+      "isFlockPaper": true
+    },
+    {
+      "id": "incentive-mechanisms-2024",
+      "scholarId": "jkl012",
+      "title": "Incentive Mechanisms for Federated Learning Participation",
+      "authors": ["David Wang", "Eve Martinez", "Grace Kim"],
+      "year": 2024,
+      "venue": "NeurIPS",
+      "venueDisplay": "Neural Information Processing Systems (NeurIPS) 2024",
+      "citationCount": 12,
+      "url": "https://arxiv.org/abs/2401.00000",
+      "abstract": "We design novel incentive mechanisms to encourage participation in federated learning networks.",
+      "tags": ["incentive design", "game theory", "federated learning", "mechanism design"],
+      "isFlockPaper": true
+    },
+    {
+      "id": "efficient-aggregation-2023",
+      "scholarId": "mno345",
+      "title": "Efficient Model Aggregation for Heterogeneous Devices",
+      "authors": ["Eve Martinez", "Bob Zhang"],
+      "year": 2023,
+      "venue": "CVPR",
+      "venueDisplay": "Computer Vision and Pattern Recognition (CVPR) 2023",
+      "citationCount": 29,
+      "url": "https://arxiv.org/abs/2305.00000",
+      "abstract": "We propose efficient aggregation techniques for federated learning across heterogeneous devices.",
+      "tags": ["model aggregation", "heterogeneous systems", "edge computing"],
+      "isFlockPaper": true
+    }
+  ],
+  "stats": {
+    "totalPapers": 5,
+    "totalCitations": 191,
+    "totalVenues": 4,
+    "topVenues": ["NeurIPS", "ICML", "ICLR", "CVPR"],
+    "lastUpdated": "2024-12-02T00:00:00Z"
+  }
+}
+

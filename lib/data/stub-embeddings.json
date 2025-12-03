@@ -1,0 +1,41 @@
+{
+  "embeddings": [
+    {
+      "paperId": "flock-fl-blockchain-2023",
+      "x": 0.2,
+      "y": 0.3,
+      "clusterId": 0,
+      "keywords": ["federated learning", "blockchain", "privacy"]
+    },
+    {
+      "paperId": "decentralized-training-2023",
+      "x": 0.25,
+      "y": 0.35,
+      "clusterId": 0,
+      "keywords": ["large language models", "decentralized training"]
+    },
+    {
+      "paperId": "privacy-ml-2022",
+      "x": 0.15,
+      "y": 0.25,
+      "clusterId": 0,
+      "keywords": ["privacy", "differential privacy", "secure aggregation"]
+    },
+    {
+      "paperId": "incentive-mechanisms-2024",
+      "x": 0.6,
+      "y": 0.5,
+      "clusterId": 1,
+      "keywords": ["incentive design", "game theory", "mechanism design"]
+    },
+    {
+      "paperId": "efficient-aggregation-2023",
+      "x": 0.3,
+      "y": 0.4,
+      "clusterId": 0,
+      "keywords": ["model aggregation", "edge computing"]
+    }
+  ],
+  "lastUpdated": "2024-12-02T00:00:00Z"
+}
+

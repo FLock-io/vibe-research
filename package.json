@@ -6,12 +6,21 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "type-check": "tsc --noEmit",
+    "setup": "npm install && echo '\n✅ Setup complete! Copy env.example.txt to .env.local and add your credentials.'",
+    "fetch-papers": "tsx scripts/fetch-scholar-data.ts"
   },
   "dependencies": {
+    "@types/d3": "^7.4.3",
+    "@vercel/kv": "^3.0.0",
+    "cheerio": "^1.1.2",
+    "d3": "^7.9.0",
+    "framer-motion": "^12.23.25",
     "next": "16.0.6",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "react-force-graph-2d": "^1.29.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -21,6 +30,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.0.6",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

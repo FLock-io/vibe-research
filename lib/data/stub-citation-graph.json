@@ -1,0 +1,80 @@
+{
+  "graph": {
+    "nodes": [
+      {
+        "id": "flock-fl-blockchain-2023",
+        "type": "flock",
+        "title": "FLock: Federated Learning on Blockchain for Privacy-Preserving AI",
+        "year": 2023,
+        "venue": "NeurIPS",
+        "isFlockPaper": true,
+        "citationCount": 45,
+        "authors": ["Alice Chen", "Bob Zhang", "Carol Liu"]
+      },
+      {
+        "id": "decentralized-training-2023",
+        "type": "flock",
+        "title": "Decentralized Training of Large Language Models with FLock",
+        "year": 2023,
+        "venue": "ICML",
+        "isFlockPaper": true,
+        "citationCount": 38,
+        "authors": ["Bob Zhang", "David Wang", "Eve Martinez"]
+      },
+      {
+        "id": "privacy-ml-2022",
+        "type": "flock",
+        "title": "Privacy-Preserving Machine Learning at Scale",
+        "year": 2022,
+        "venue": "ICLR",
+        "isFlockPaper": true,
+        "citationCount": 67,
+        "authors": ["Carol Liu", "Alice Chen", "Frank Johnson"]
+      },
+      {
+        "id": "external-1",
+        "type": "external",
+        "title": "Survey of Federated Learning Techniques",
+        "year": 2024,
+        "venue": "arXiv",
+        "isFlockPaper": false,
+        "citationCount": 15,
+        "authors": ["John Doe", "Jane Smith"]
+      },
+      {
+        "id": "external-2",
+        "type": "external",
+        "title": "Blockchain Applications in Machine Learning",
+        "year": 2024,
+        "venue": "IEEE",
+        "isFlockPaper": false,
+        "citationCount": 8,
+        "authors": ["Mike Brown"]
+      }
+    ],
+    "edges": [
+      {
+        "sourceId": "external-1",
+        "targetId": "flock-fl-blockchain-2023",
+        "relationType": "cites"
+      },
+      {
+        "sourceId": "external-1",
+        "targetId": "decentralized-training-2023",
+        "relationType": "cites"
+      },
+      {
+        "sourceId": "external-2",
+        "targetId": "flock-fl-blockchain-2023",
+        "relationType": "cites"
+      },
+      {
+        "sourceId": "decentralized-training-2023",
+        "targetId": "privacy-ml-2022",
+        "relationType": "cites"
+      }
+    ]
+  },
+  "lastUpdated": "2024-12-02T00:00:00Z"
+}
+
