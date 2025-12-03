@@ -47,7 +47,7 @@ export async function storePapers(papers: Paper[]): Promise<void> {
   }
   
   const kvClient = await getKV();
-  await kvClient.set(KEYS.PAPERS, JSON.stringify(papers));
+  await kvClient.set(KEYS.PAPERS, papers);
 }
 
 /**
@@ -59,8 +59,7 @@ export async function getPapers(): Promise<Paper[] | null> {
   }
   
   const kvClient = await getKV();
-  const data = await kvClient.get<string>(KEYS.PAPERS);
-  return data ? JSON.parse(data) : null;
+  return await kvClient.get<Paper[]>(KEYS.PAPERS);
 }
 
 /**
@@ -73,7 +72,7 @@ export async function storeCitationGraph(graph: CitationGraph): Promise<void> {
   }
   
   const kvClient = await getKV();
-  await kvClient.set(KEYS.CITATION_GRAPH, JSON.stringify(graph));
+  await kvClient.set(KEYS.CITATION_GRAPH, graph);
 }
 
 /**
@@ -85,8 +84,7 @@ export async function getCitationGraph(): Promise<CitationGraph | null> {
   }
   
   const kvClient = await getKV();
-  const data = await kvClient.get<string>(KEYS.CITATION_GRAPH);
-  return data ? JSON.parse(data) : null;
+  return await kvClient.get<CitationGraph>(KEYS.CITATION_GRAPH);
 }
 
 /**
@@ -99,7 +97,7 @@ export async function storeEmbeddings(embeddings: SemanticEmbedding[]): Promise<
   }
   
   const kvClient = await getKV();
-  await kvClient.set(KEYS.EMBEDDINGS, JSON.stringify(embeddings));
+  await kvClient.set(KEYS.EMBEDDINGS, embeddings);
 }
 
 /**
@@ -111,8 +109,7 @@ export async function getEmbeddings(): Promise<SemanticEmbedding[] | null> {
   }
   
   const kvClient = await getKV();
-  const data = await kvClient.get<string>(KEYS.EMBEDDINGS);
-  return data ? JSON.parse(data) : null;
+  return await kvClient.get<SemanticEmbedding[]>(KEYS.EMBEDDINGS);
 }
 
 /**
@@ -125,7 +122,7 @@ export async function storeStats(stats: DataStats): Promise<void> {
   }
   
   const kvClient = await getKV();
-  await kvClient.set(KEYS.STATS, JSON.stringify(stats));
+  await kvClient.set(KEYS.STATS, stats);
 }
 
 /**
@@ -137,8 +134,7 @@ export async function getStats(): Promise<DataStats | null> {
   }
   
   const kvClient = await getKV();
-  const data = await kvClient.get<string>(KEYS.STATS);
-  return data ? JSON.parse(data) : null;
+  return await kvClient.get<DataStats>(KEYS.STATS);
 }
 
 /**
